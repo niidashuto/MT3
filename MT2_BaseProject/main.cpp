@@ -98,13 +98,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 		timeRate = min(elapsedTime / maxTime, 1.0f);
 
+		//緑の線分
 		Vector3 a = lerp(p0, p1, timeRate);
 		Vector3 b = lerp(p1, p2, timeRate);
 		Vector3 c = lerp(p2, p3, timeRate);
 
+		//青の線分
 		Vector3 d = lerp(a, b, timeRate);
 		Vector3 e = lerp(b, c, timeRate);
 
+		//動く球
 		position = lerp(d, e, timeRate);
 
 		//position = easeIn(start,end,timeRate);
@@ -131,6 +134,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		DrawFormatString(0, 60, GetColor(255, 255, 255), "p0(%6.1f,%6.1f,%6.1f)", p0.x, p0.y, p0.z);
 		DrawFormatString(0, 80, GetColor(255, 255, 255), "p1(%6.1f,%6.1f,%6.1f)", p1.x, p1.y, p1.z);
 		DrawFormatString(0, 100, GetColor(255, 255, 255), "p2(%6.1f,%6.1f,%6.1f)", p2.x, p2.y, p2.z);
+		DrawFormatString(0, 120, GetColor(255, 255, 255), "p3(%6.1f,%6.1f,%6.1f)", p3.x, p3.y, p3.z);
 		//DrawKeyOperation();//キー操作の描画
 
 		//---------  ここまでにプログラムを記述  ---------//
