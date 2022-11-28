@@ -47,9 +47,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	SetCameraNearFar(1.0f, 1000.0f);//カメラの有効範囲を設定
 	SetCameraScreenCenter(WIN_WIDTH / 2.0f, WIN_HEIGHT / 2.0f);//画面の中心をカメラの中心に合わせる
 	SetCameraPositionAndTargetAndUpVec(
-		Vector3(0.0f,0.0f,-120.0f),//カメラの位置
+		Vector3(0.0f,200.0f,0.0f),//カメラの位置
 		Vector3(0.0f, 0.0f, 0.0f),//カメラの注視点
-		Vector3(0.0f, 1.0f, 0.0f)//カメラの上の向き
+		Vector3(0.0f, 0.0f, 1.0f)//カメラの上の向き
 	);
 
 	//時間計測に必要なデータ
@@ -59,8 +59,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 	//補間で使うデータ
 	//start -> endを5[s]で完了させる
-	Vector3 start(-100.0f, 0.0f, 0.0f);//スタート地点
-	Vector3 end(+100.0f, 0.0f, 0.0f);//エンド地点
+	Vector3 p0(-100.0f, 0.0f, 0.0f);//スタート地点
+	Vector3 p1(-10.0f, 0.0f, 50.0f);//制御点
+	Vector3 p2(10.0f, 0.0f, -50.0f);//制御点
+	Vector3 p3(+100.0f, 0.0f, 0.0f);//エンド地点
 	float maxTime = 5.0f;
 	float timeRate;
 
@@ -96,7 +98,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 		timeRate = min(elapsedTime / maxTime, 1.0f);
 
-		position = lerp(start, end, timeRate);
+		Vector3 a = lerp(p0, p1, timeRate);
+		Vector3 b = lerp(p1, p2, timeRate);
+		Vector3 c = lerp(p2, p3, timeRate);
+
+		Vector3 d = lerp(a, b, timeRate);
+		Vector3 e = lerp(b, c, timeRate);
+
+		position = lerp(d, e, timeRate);
 
 		//position = easeIn(start,end,timeRate);
 		//position = easeOut(start,end,timeRate);
@@ -109,12 +118,19 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 		//球の描画
 		DrawSphere3D(position, 5.0f, 32, GetColor(255, 0, 0), GetColor(255, 255, 255), TRUE);
+		DrawSphere3D(p0, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
+		DrawSphere3D(p1, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
+		DrawSphere3D(p2, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
+		DrawSphere3D(p3, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
 
 		//
 		DrawFormatString(0, 0, GetColor(255, 255, 255), "position(%5.1f,%5.1f,%5.1f)", position.x, position.y, position.z);
 		DrawFormatString(0, 20, GetColor(255, 255, 255), "%7.3f [s]", elapsedTime);
 		DrawFormatString(0, 40, GetColor(255, 255, 255), "[R] : Restart");
 
+		DrawFormatString(0, 60, GetColor(255, 255, 255), "p0(%6.1f,%6.1f,%6.1f)", p0.x, p0.y, p0.z);
+		DrawFormatString(0, 80, GetColor(255, 255, 255), "p1(%6.1f,%6.1f,%6.1f)", p1.x, p1.y, p1.z);
+		DrawFormatString(0, 100, GetColor(255, 255, 255), "p2(%6.1f,%6.1f,%6.1f)", p2.x, p2.y, p2.z);
 		//DrawKeyOperation();//キー操作の描画
 
 		//---------  ここまでにプログラムを記述  ---------//
