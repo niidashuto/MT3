@@ -1,5 +1,6 @@
 #include "DxLib.h"
 #include "Vector3.h"
+#include <vector>
 
 //関数プロトタイプ宣言
 void DrawAxis3D(const float length);
@@ -22,6 +23,9 @@ int SetCameraPositionAndTargetAndUpVec(
 	const Vector3& cameraTarget,//カメラの注視点
 	const Vector3& cameraUp
 );
+
+//制御点の集合
+Vector3 splinePosition(const std::vector<Vector3>& points, size_t startIndex, float t);
 
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
@@ -47,9 +51,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	SetCameraNearFar(1.0f, 1000.0f);//カメラの有効範囲を設定
 	SetCameraScreenCenter(WIN_WIDTH / 2.0f, WIN_HEIGHT / 2.0f);//画面の中心をカメラの中心に合わせる
 	SetCameraPositionAndTargetAndUpVec(
-		Vector3(0.0f,200.0f,0.0f),//カメラの位置
+		Vector3(-20.0f, 20.0f, -120.0f),
+		//Vector3(0.0f,200.0f,0.0f),//カメラの位置
 		Vector3(0.0f, 0.0f, 0.0f),//カメラの注視点
-		Vector3(0.0f, 0.0f, 1.0f)//カメラの上の向き
+		Vector3(0.0f, 1.0f, 0.0f)//カメラの上の向き
 	);
 
 	//時間計測に必要なデータ
@@ -59,15 +64,21 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 	//補間で使うデータ
 	//start -> endを5[s]で完了させる
-	Vector3 p0(-100.0f, 0.0f, 0.0f);//スタート地点
-	Vector3 p1(-10.0f, 0.0f, 50.0f);//制御点
-	Vector3 p2(10.0f, 0.0f, -50.0f);//制御点
-	Vector3 p3(+100.0f, 0.0f, 0.0f);//エンド地点
+	Vector3 start(-100.0f, 0.0f, 0.0f);//スタート地点
+	Vector3 p2(-50.0f, 50.0f, 50.0f);//制御点
+	Vector3 p3(+50.0f, 30.0f, -50.0f);//制御点
+	Vector3 end(+100.0f, 0.0f, 0.0f);//エンド地点
+
+	std::vector<Vector3> points{ start,start,p2,p3,end,end };
+
 	float maxTime = 5.0f;
 	float timeRate;
 
 	//球の位置
 	Vector3 position;
+
+	//p1からスタートする
+	size_t startIndex = 1;
 
 	//実行前に　カウンタ値を取得
 	startCount = GetNowHiPerformanceCount(); //long long int型  64bit int
@@ -85,6 +96,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		if (CheckHitKey(KEY_INPUT_R))
 		{
 			startCount = GetNowHiPerformanceCount();
+			startIndex = 1;
 		}
 		//経過時間(elapsedTime[s])の計算
 		nowCount = GetNowHiPerformanceCount();
@@ -96,12 +108,29 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		//経過時間　　　　:elapsedTime[s]
 		//移動完了の率(経過時間/全体時間):timeRate(%)
 
-		timeRate = min(elapsedTime / maxTime, 1.0f);
+		//timeRateが1.0f以上になったら、次の区間に進む
+		timeRate = elapsedTime / maxTime;
+		//timeRate = min(elapsedTime / maxTime, 1.0f);
+
+		if (timeRate >= 1.0f)
+		{
+			if (startIndex < points.size() - 3)
+			{
+
+				timeRate -= 1.0f;
+				startCount = GetNowHiPerformanceCount();
+			}
+			else
+			{
+				timeRate = 1.0f;
+			}
+		}
+		position = splinePosition(points,1,);
 
 		//緑の線分
-		Vector3 a = lerp(p0, p1, timeRate);
-		Vector3 b = lerp(p1, p2, timeRate);
-		Vector3 c = lerp(p2, p3, timeRate);
+		Vector3 a = lerp(start, p2, timeRate);
+		Vector3 b = lerp(p2, p3, timeRate);
+		Vector3 c = lerp(p3, end, timeRate);
 
 		//青の線分
 		Vector3 d = lerp(a, b, timeRate);
@@ -120,21 +149,23 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		DrawAxis3D(500.0f); //xyz軸の描画
 
 		//球の描画
-		DrawSphere3D(position, 5.0f, 32, GetColor(255, 0, 0), GetColor(255, 255, 255), TRUE);
-		DrawSphere3D(p0, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
-		DrawSphere3D(p1, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
+		
+		DrawSphere3D(start, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
 		DrawSphere3D(p2, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
 		DrawSphere3D(p3, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
+		DrawSphere3D(end, 1.0f, 32, GetColor(255, 255, 255), GetColor(255, 255, 255), TRUE);
+
+		DrawSphere3D(position, 5.0f, 32, GetColor(255, 0, 0), GetColor(255, 255, 255), TRUE);
 
 		//
 		DrawFormatString(0, 0, GetColor(255, 255, 255), "position(%5.1f,%5.1f,%5.1f)", position.x, position.y, position.z);
 		DrawFormatString(0, 20, GetColor(255, 255, 255), "%7.3f [s]", elapsedTime);
 		DrawFormatString(0, 40, GetColor(255, 255, 255), "[R] : Restart");
 
-		DrawFormatString(0, 60, GetColor(255, 255, 255), "p0(%6.1f,%6.1f,%6.1f)", p0.x, p0.y, p0.z);
-		DrawFormatString(0, 80, GetColor(255, 255, 255), "p1(%6.1f,%6.1f,%6.1f)", p1.x, p1.y, p1.z);
-		DrawFormatString(0, 100, GetColor(255, 255, 255), "p2(%6.1f,%6.1f,%6.1f)", p2.x, p2.y, p2.z);
-		DrawFormatString(0, 120, GetColor(255, 255, 255), "p3(%6.1f,%6.1f,%6.1f)", p3.x, p3.y, p3.z);
+		DrawFormatString(0, 60, GetColor(255, 255, 255), "p0(%6.1f,%6.1f,%6.1f)", start.x, start.y, start.z);
+		DrawFormatString(0, 80, GetColor(255, 255, 255), "p1(%6.1f,%6.1f,%6.1f)", p2.x, p2.y, p2.z);
+		DrawFormatString(0, 100, GetColor(255, 255, 255), "p2(%6.1f,%6.1f,%6.1f)", p3.x, p3.y, p3.z);
+		DrawFormatString(0, 120, GetColor(255, 255, 255), "p3(%6.1f,%6.1f,%6.1f)", end.x, end.y, end.z);
 		//DrawKeyOperation();//キー操作の描画
 
 		//---------  ここまでにプログラムを記述  ---------//
@@ -196,5 +227,24 @@ int SetCameraPositionAndTargetAndUpVec(
 	VECTOR up = { cameraUp.x,cameraUp.y,cameraUp.z };
 
 	return SetCameraPositionAndTargetAndUpVec(position, target, up);
+}
+
+Vector3 splinePosition(const std::vector<Vector3>& points, size_t startIndex, float t)
+{
+	//補間すべき点の数
+	size_t n = points.size() - 2;
+
+	if (startIndex > n)return points[n];//Pnの値を返す
+	if (startIndex < 1)return points[1];//P1の値を返す
+
+	//p0~p3の制御点を取得する p1~p2を補間する
+	Vector3 p0 = points[startIndex - 1];
+	Vector3 p1 = points[startIndex];
+	Vector3 p2 = points[startIndex + 1];
+	Vector3 p3 = points[startIndex + 2];
+	//Catmull-Romの式による補間
+	Vector3 position = ;
+
+	return position;
 }
 
