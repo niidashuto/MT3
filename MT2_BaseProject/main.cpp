@@ -66,7 +66,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	//start -> endを5[s]で完了させる
 	Vector3 start(-100.0f, 0.0f, 0.0f);//スタート地点
 	Vector3 p2(-50.0f, 50.0f, 50.0f);//制御点
-	Vector3 p3(+50.0f, 30.0f, -50.0f);//制御点
+	Vector3 p3(50.0f, -30.0f, -50.0f);//制御点
 	Vector3 end(+100.0f, 0.0f, 0.0f);//エンド地点
 
 	std::vector<Vector3> points{ start,start,p2,p3,end,end };
@@ -116,7 +116,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		{
 			if (startIndex < points.size() - 3)
 			{
-
+				startIndex += 1;
 				timeRate -= 1.0f;
 				startCount = GetNowHiPerformanceCount();
 			}
@@ -125,19 +125,20 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 				timeRate = 1.0f;
 			}
 		}
-		position = splinePosition(points,1,);
+		position = splinePosition(points,startIndex,timeRate);
 
-		//緑の線分
-		Vector3 a = lerp(start, p2, timeRate);
-		Vector3 b = lerp(p2, p3, timeRate);
-		Vector3 c = lerp(p3, end, timeRate);
+		////緑の線分
+		//Vector3 a = lerp(start, p2, timeRate);
+		//Vector3 b = lerp(p2, p3, timeRate);
+		//Vector3 c = lerp(p3, end, timeRate);
 
-		//青の線分
-		Vector3 d = lerp(a, b, timeRate);
-		Vector3 e = lerp(b, c, timeRate);
+		////青の線分
+		//Vector3 d = lerp(a, b, timeRate);
+		//Vector3 e = lerp(b, c, timeRate);
 
-		//動く球
-		position = lerp(d, e, timeRate);
+		////動く球
+		//position = lerp(d, e, timeRate);
+		
 
 		//position = easeIn(start,end,timeRate);
 		//position = easeOut(start,end,timeRate);
@@ -243,8 +244,11 @@ Vector3 splinePosition(const std::vector<Vector3>& points, size_t startIndex, fl
 	Vector3 p2 = points[startIndex + 1];
 	Vector3 p3 = points[startIndex + 2];
 	//Catmull-Romの式による補間
-	Vector3 position = ;
+	Vector3 position = {
+		2 * p1 + (-p0 + p2) * t +
+		(2 * p0 - 5 * p1 + 4 * p2 - p3) * (t * t) +
+		(-p0 + 3 * p1 - 3 * p2 + p3) * (t * t * t) };
 
-	return position;
+	return position * 0.5f;
 }
 
